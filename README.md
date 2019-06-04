@@ -1,69 +1,64 @@
-# Update git branch action
+# GitHub Action - Merge Master Branch
 
-A GitHub Action that update a branch with current commit.
+Automaically merges latest commits from master branch into feature branches.
 
 ## Usage
-
-This GitHub Action update a branch. Here's an example workflow that update a staging branch at
-each commit on master you push a commit on master:
-
 ```workflow
-workflow "Update staging branch on push" {
+workflow "Update Feature Branches" {
   on = "push"
   resolves = ["Update branch"]
 }
 
-action "Master" {
+action "Is Master Branch" {
   uses = "actions/bin/filter@master"
   args = "branch master"
 }
 
-action "Update branch" {
-  needs = "Master"
-  uses = "Embraser01/update-git-branch-action@master"
-  args = "--branch staging --force"
-  secrets = ["PAT_TOKEN"]
+action "Update Feature Branches" {
+  needs = "Is Master Branch"
+  uses = "lots0logs/gh-action-merge-master-branch@master"
+  args = "--branch-regex ^\d+-\w+"
+  secrets = ["PA_TOKEN"]
 }
 ```
 
 You could also run this after a release is published (see [tags](#tags)):
 
 ```workflow
-workflow "Update stable branch on release" {
+workflow "Update Feature Branches" {
   on = "release"
   resolves = ["Update branch"]
 }
 
-action "Tag" {
+action "Is Master Tag" {
   uses = "actions/bin/filter@master"
-  args = "tag v*"
+  args = "tag [0-9]*"
 }
 
-action "Update branch" {
-  needs = "Tag"
-  uses = "Embraser01/update-git-branch-action@master"
-  args = "--branch stable"
-  secrets = ["PAT_TOKEN"]
+action "Update Feature Branches" {
+  needs = "Is Master Tag"
+  uses = "lots0logs/gh-action-merge-master-branch@master"
+  args = "--branch-regex ^\d+-\w+"
+  secrets = ["PA_TOKEN"]
 }
 ```
 
-## Github token
+## Github Token
 
-Because the `GITHUB_TOKEN` will not trigger another workflow, the action allow another secret
-`PAT_TOKEN` to be used (only if not `GITHUB_TOKEN` is not provided).
+Because the `GITHUB_TOKEN` will not trigger another workflow, the action allows another secret
+`PA_TOKEN` to be used (only if `GITHUB_TOKEN` is not provided).
 
 You can generate a Personal Access Token [here](https://github.com/settings/tokens).
 
 ## Tags
 
-When a tag is pushed, the action will check if the tag is the HEAD of a protected branch. It
-uses the
-[Github API](https://developer.github.com/v3/repos/commits/#list-branches-for-head-commit). It
-could fail if a commit was pushed before the action is started.
+When a tag is pushed, the action will check if the tag is the HEAD of a protected branch.
+It uses the [Github API](https://developer.github.com/v3/repos/commits/#list-branches-for-head-commit).
+It could fail if a commit was pushed before the action is started.
 
 ## Options
 
-- `branch`: The branch to update (**required**).
+- `branch-regex`: Regex pattern used to determine which branches to update. (**required**).
 - `skipProtected`: For tags, don't check for protected branch.
 - `force`: Indicates whether to force the update or to make sure the update is a fast-forward
   update. Leaving this out or setting it to `false` will make sure you're not overwriting work.
