@@ -1,19 +1,22 @@
 const { Toolkit } = require('actions-toolkit');
 
 // Allow for another token
-process.env.GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.PAT_TOKEN;
+process.env.GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.PA_TOKEN;
 
 Toolkit.run(
   async tools => {
-    const { branch, force = false, skipProtected = false } = tools.arguments;
+    const { branchRegex, force = false, skipProtected = false } = tools.arguments
 
-    if (!branch) {
+    if (!branchRegex) {
       return tools.exit.failure(
-        'A branch option is required (i.e: --branch staging)',
+        'A branch regex arg is required (i.e: --branch-regex staging)',
       );
     }
-
-    const ref = tools.context.ref;
+    
+    const regex = new RegExp(branchRegex);
+    const ref   = tools.context.ref;
+    const branches = await .repos.listBranches(
+    
     if (ref === `heads/${branch}`) {
       return tools.exit.neutral(
         'Commit is already on the destination branch, ignoring',
