@@ -13,14 +13,22 @@ Toolkit.run(
       );
     }
     
+    const gh    = tools.github;
     const regex = new RegExp(branchRegex);
     const ref   = tools.context.ref;
-    const branches = await .repos.listBranches(
     
-    if (ref === `heads/${branch}`) {
-      return tools.exit.neutral(
-        'Commit is already on the destination branch, ignoring',
-      );
+    const { owner, repo } = tools.context.repo.split('/');
+    const branches        = gh.repos.listBranches.endpoint.merge({ owner, repo });
+    
+    for await (const { data: branch } of gh.paginate(branches)) {
+      if (! regex.test(branch)) {
+        continue;
+      }
+      
+      const base = branch;
+      const head = 'master';
+      
+      await gh.repos.merge({ owner, repo, base, head });
     }
 
     if (ref.startsWith('tags/')) {
